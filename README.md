@@ -18,6 +18,45 @@ Jev-Omni is a 12B self-hosted classifier with substantial CUDA memory requiremen
 
 Three frames are rendered into an ordered contact sheet for Jev-Omni's image input. The stronger VLM receives the original frames through a separate adapter. A low-motion window is normally skipped, but every Nth window is still classified so stationary anomalies are not permanently invisible.
 
+## Model
+
+The first-stage classifier is
+[`akhilaaa3/Jev-Omni`](https://huggingface.co/akhilaaa3/Jev-Omni), an independent
+open-weight 12B multimodal decision classifier built on Gemma 4 12B IT. It receives a
+state, one question, user-defined options, and optional media, then returns a probability
+for each option rather than generating an explanation. It is distinct from TypeSafe AI's
+Jev product.
+
+For each temporal window, this project combines three ordered frames into one image and asks
+Jev-Omni to classify it as `safe` or `suspicious`. The official loader requires CUDA; the
+checkpoint download is about 24 GB and inference uses BF16. The supplied Slurm job requests
+one A100 80GB GPU and runs the HTTP service and video pipeline on the same compute node.
+
+## Evaluation dataset
+
+The MVP uses an eight-video pet-monitoring subset of
+[`SmartHome-Bench`](https://github.com/Xinyi-0724/SmartHome-Bench-LLM), a CVPR 2025
+Workshop benchmark containing 1,203 smart-home-camera videos across seven scenario
+categories. Its annotations include an anomaly tag, video description, and reasoning. See
+the [paper](https://openaccess.thecvf.com/content/CVPR2025W/VAND/papers/Zhao_SmartHome-Bench_A_Comprehensive_Benchmark_for_Video_Anomaly_Detection_in_Smart_CVPRW_2025_paper.pdf)
+for the collection and evaluation protocol.
+
+| Video ID          | Category                 | Ground-truth tag |
+| ----------------- | ------------------------ | ---------------- |
+| `smartbench_0014` | Pet Monitoring           | Normal           |
+| `smartbench_0017` | Pet Monitoring           | Normal           |
+| `smartbench_0022` | Security, Pet Monitoring | Vague Abnormal   |
+| `smartbench_0028` | Pet Monitoring           | Normal           |
+| `smartbench_0030` | Pet Monitoring           | Normal           |
+| `smartbench_0062` | Pet Monitoring           | Normal           |
+| `smartbench_0065` | Pet Monitoring           | Abnormal         |
+| `smartbench_0093` | Pet Monitoring           | Vague Abnormal   |
+
+Videos and annotations stay outside this repository under `datasets/pet-home-sample/` and
+must be obtained under the original dataset and source-video terms. Ground-truth fields are
+used only after inference for evaluation; they are never included in the model state,
+question, media, or options.
+
 ## Project layout
 
 ```text
@@ -107,7 +146,7 @@ Prepare the shared model cache on a login node; this downloads roughly 24 GB but
 load the model or require a GPU:
 
 ```bash
-export HF_HOME=.../cache/huggingface
+export HF_HOME="${SCRATCH:-$HOME/.cache}/huggingface"
 python scripts/download_jev_model.py
 ```
 
@@ -116,7 +155,8 @@ GPU node, waits for model loading, then writes the event log, summary, and serve
 one timestamped result directory:
 
 ```bash
-sbatch scripts/run_video_job.slurm
+sbatch --export=ALL,DATA_DIR=/path/to/pet-home-sample \
+  scripts/run_video_job.slurm
 ```
 
 Override the input without editing the script:
@@ -125,6 +165,11 @@ Override the input without editing the script:
 sbatch --export=ALL,VIDEO_PATH=/path/to/video.mp4,CAMERA_ID=my-camera \
   scripts/run_video_job.slurm
 ```
+
+The script resolves `PROJECT_DIR` from its own location, uses `$SCRATCH` or `$HOME/.cache`
+for the Hugging Face cache, and relies on the cluster's default Slurm account. Override
+`PROJECT_DIR`, `VENV_PATH`, `HF_HOME`, partition, account, or GPU directives for a different
+cluster environment.
 
 Set `JEV_MONITOR_VLM_PROVIDER=http` for the strong model. The generic contract is:
 
@@ -149,11 +194,11 @@ POST /v1/analyze
 
 ## API surface
 
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /health` | Process health and active provider names |
-| `POST /v1/analyze-window` | Analyze exactly three ordered images |
-| `GET /v1/events?limit=50` | Read recent structured events |
+| Endpoint                  | Purpose                                  |
+| ------------------------- | ---------------------------------------- |
+| `GET /health`             | Process health and active provider names |
+| `POST /v1/analyze-window` | Analyze exactly three ordered images     |
+| `GET /v1/events?limit=50` | Read recent structured events            |
 
 ## MVP policy
 
