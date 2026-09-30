@@ -30,7 +30,13 @@ src/jev_monitor/
   pipeline.py     orchestration and escalation policy
   adapters.py     motion gate, contact sheet, mock/HTTP models, JSONL log
   video.py        streaming video sampling, sliding windows, and summary
+  jev_server.py   CUDA Jev-Omni HTTP inference service
+scripts/
+  download_jev_model.py  model-cache preparation without a GPU
+  run_jev_server.sh      local service launcher for a GPU node
+  run_video_job.slurm    one-video GPU job
 tests/
+  test_jev_server.py
   test_pipeline.py
   test_video.py
 ```
@@ -87,7 +93,38 @@ POST /v1/classify (multipart/form-data)
   {"probabilities": {"safe": 0.12, "suspicious": 0.88}}
 ```
 
-The service wrapper can host `load_jev_omni()` on a CUDA machine or translate to another hosted inference provider.
+The included `jev_monitor.jev_server` hosts the official `load_jev_omni()` loader on a CUDA machine.
+
+## Run Jev-Omni on the cluster
+
+Install the model-specific dependencies separately from the base application:
+
+```bash
+python -m pip install -e '.[dev,jev]'
+```
+
+Prepare the shared model cache on a login node; this downloads roughly 24 GB but does not
+load the model or require a GPU:
+
+```bash
+export HF_HOME=/project2/ruishanl_1185/huangxin/cache/huggingface
+python scripts/download_jev_model.py
+```
+
+Submit one real-model video run. The job starts the Jev service and `run-video` on the same
+GPU node, waits for model loading, then writes the event log, summary, and server log beneath
+one timestamped result directory:
+
+```bash
+sbatch scripts/run_video_job.slurm
+```
+
+Override the input without editing the script:
+
+```bash
+sbatch --export=ALL,VIDEO_PATH=/path/to/video.mp4,CAMERA_ID=my-camera \
+  scripts/run_video_job.slurm
+```
 
 Set `JEV_MONITOR_VLM_PROVIDER=http` for the strong model. The generic contract is:
 

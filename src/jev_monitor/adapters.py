@@ -97,11 +97,12 @@ class HttpJevClassifier:
                 timeout=90,
             )
         response.raise_for_status()
-        probabilities = response.json()["probabilities"]
+        data = response.json()
+        probabilities = data["probabilities"]
         return ClassificationResult(
             safe=float(probabilities["safe"]),
             suspicious=float(probabilities["suspicious"]),
-            provider=self.name,
+            provider=str(data.get("model", self.name)),
         )
 
 # mock VLM for analysis
@@ -202,4 +203,3 @@ class JsonlEventSink:
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
