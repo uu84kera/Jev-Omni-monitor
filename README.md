@@ -7,15 +7,15 @@ Camera
 
    ↓
    
-3-frame temporal window
+Frame Sampling 
 
    ↓
    
-Motion filter
+Lightweight filtering
 
    ↓
    
-Jev-Omni
+Jev-Omni Classifier
 
    ↓
    
@@ -27,27 +27,15 @@ Strong VLM        Ignore
 
    ↓
    
-What happened?
+semantic analysis
 
    ↓
    
-Event classification
+Event + Severity
 
    ↓
    
-Severity
-
-   ↓
-   
-Policy engine
-
-   ├── log
-   
-   ├── save
-   
-   ├── notify
-   
-   └── emergency
+Alert / store / action
 
 
 
