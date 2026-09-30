@@ -1,8 +1,8 @@
 .env
 .venv/
+*.egg-info/
 __pycache__/
 .pytest_cache/
 *.pyc
 data/events/*.jsonl
 data/windows/
-

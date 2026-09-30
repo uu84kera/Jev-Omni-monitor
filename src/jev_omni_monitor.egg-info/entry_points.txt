@@ -1,2 +1,0 @@
-[console_scripts]
-jev-monitor = jev_monitor.cli:main
