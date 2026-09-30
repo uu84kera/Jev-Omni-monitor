@@ -18,6 +18,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3"]
+jev = [
+  "accelerate",
+  "huggingface-hub",
+  "librosa",
+  "safetensors",
+  "soundfile",
+  "torch>=2.10",
+  "torchvision",
+  "transformers==5.17.0",
+]
 
 [project.scripts]
 jev-monitor = "jev_monitor.cli:main"
