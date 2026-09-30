@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=jev-video
 #SBATCH --partition=gpu
-#SBATCH --account=ruishanl_1185
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
@@ -12,17 +11,21 @@
 
 set -euo pipefail
 
-PROJECT_DIR="${PROJECT_DIR:-/project2/ruishanl_1185/huangxin/Jev-Omni-monitor}"
-DATA_DIR="${DATA_DIR:-/project2/ruishanl_1185/huangxin/datasets/pet-home-sample}"
-VIDEO_PATH="${VIDEO_PATH:-$DATA_DIR/raw/smartbench_0014.mp4}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${PROJECT_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+VENV_PATH="${VENV_PATH:-$PROJECT_DIR/.venv}"
+if [[ -z "${VIDEO_PATH:-}" ]]; then
+    : "${DATA_DIR:?Set DATA_DIR or VIDEO_PATH before submitting the job}"
+    VIDEO_PATH="$DATA_DIR/raw/smartbench_0014.mp4"
+fi
 CAMERA_ID="${CAMERA_ID:-$(basename "$VIDEO_PATH" .mp4)}"
 RUN_ID="${RUN_ID:-$(date +%Y%m%d-%H%M%S)}"
 RESULT_DIR="$PROJECT_DIR/results/$RUN_ID"
 
 cd "$PROJECT_DIR"
-source .venv/bin/activate
+source "$VENV_PATH/bin/activate"
 
-export HF_HOME="${HF_HOME:-/project2/ruishanl_1185/huangxin/cache/huggingface}"
+export HF_HOME="${HF_HOME:-${SCRATCH:-$HOME/.cache}/huggingface}"
 export OPENBLAS_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
