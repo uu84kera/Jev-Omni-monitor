@@ -1,4 +1,4 @@
-# Jev-Omni Monitor MVP
+# JevGuard: Hierarchical Multimodal Anomaly Monitoring
 
 A small, provider-neutral implementation of a hierarchical camera anomaly pipeline:
 
