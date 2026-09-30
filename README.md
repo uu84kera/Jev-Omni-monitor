@@ -4,27 +4,49 @@ Jev-Omni is a open-source image, audio, video and text classifier pretrained on 
 
 ### Architecture
 Camera
+
    ↓
+   
 3-frame temporal window
+
    ↓
+   
 Motion filter
+
    ↓
+   
 Jev-Omni
+
    ↓
+   
 suspicious   /     safe 
+
    ↓                 ↓
+   
 Strong VLM        discard
+
    ↓
+   
 What happened?
+
    ↓
+   
 Event classification
+
    ↓
+   
 Severity
+
    ↓
+   
 Policy engine
+
    ├── log
+   
    ├── save
+   
    ├── notify
+   
    └── emergency
 
 
