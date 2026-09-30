@@ -1,0 +1,2 @@
+"""Jev-Omni Monitor MVP."""
+
