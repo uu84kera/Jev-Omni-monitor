@@ -1,4 +1,4 @@
-"""Provide demo and folder-based command-line entry points."""
+"""Provide demo, folder, and video command-line entry points."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw
 from .bootstrap import build_pipeline
 from .config import Settings
 from .domain import Frame, TemporalWindow
+from .video import process_video
 
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
@@ -54,6 +55,22 @@ def run_folder(folder: Path, camera_id: str) -> int:
     return 0
 
 
+def run_video(video_path: Path, camera_id: str | None, sample_interval: float) -> int:
+    pipeline, _ = build_pipeline(Settings.from_env())
+    try:
+        summary = process_video(
+            video_path=video_path,
+            camera_id=camera_id or video_path.stem,
+            interval_seconds=sample_interval,
+            pipeline=pipeline,
+        )
+    except (RuntimeError, ValueError) as error:
+        raise SystemExit(str(error)) from error
+
+    print(json.dumps(summary.to_dict(), indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Jev-Omni hierarchical anomaly monitor")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -61,12 +78,17 @@ def main() -> int:
     folder = commands.add_parser("run-folder", help="Process ordered images in groups of three")
     folder.add_argument("path", type=Path)
     folder.add_argument("--camera-id", default="folder-camera")
+    video = commands.add_parser("run-video", help="Process overlapping windows sampled from a video")
+    video.add_argument("path", type=Path)
+    video.add_argument("--camera-id")
+    video.add_argument("--sample-interval", type=float, default=0.5)
     args = parser.parse_args()
     if args.command == "demo":
         return run_demo()
-    return run_folder(args.path, args.camera_id)
+    if args.command == "run-folder":
+        return run_folder(args.path, args.camera_id)
+    return run_video(args.path, args.camera_id, args.sample_interval)
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

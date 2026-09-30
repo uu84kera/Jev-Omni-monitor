@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115",
   "httpx>=0.28",
+  "opencv-python-headless>=4.10",
   "pillow>=11.0",
   "python-multipart>=0.0.20",
   "uvicorn[standard]>=0.34",
@@ -27,4 +28,3 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-

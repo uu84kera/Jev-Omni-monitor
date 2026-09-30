@@ -23,14 +23,16 @@ Three frames are rendered into an ordered contact sheet for Jev-Omni's image inp
 ```text
 src/jev_monitor/
   api.py          HTTP service: health, analyze one 3-frame window, recent events
-  cli.py          runnable demo and folder-stream commands
+  cli.py          runnable demo, folder-stream, and video commands
   config.py       environment configuration
   domain.py       typed pipeline inputs and outputs
   ports.py        provider and logging interfaces
   pipeline.py     orchestration and escalation policy
   adapters.py     motion gate, contact sheet, mock/HTTP models, JSONL log
+  video.py        streaming video sampling, sliding windows, and summary
 tests/
   test_pipeline.py
+  test_video.py
 ```
 
 ## Run locally
@@ -60,6 +62,15 @@ Or process an ordered image directory as a stream:
 ```bash
 jev-monitor run-folder ./sample-frames
 ```
+
+Process a video with overlapping three-frame windows sampled every 0.5 seconds:
+
+```bash
+jev-monitor run-video ./sample.mp4 --camera-id living-room --sample-interval 0.5
+```
+
+Each window is appended to the configured JSONL event log. Standard output contains a final
+video summary with sampled, ignored, safe, and suspicious window counts.
 
 ## Provider contracts
 
@@ -118,4 +129,3 @@ POST /v1/analyze
 - Strong VLM `low` or `none`: `log_only`.
 
 Before production, collect labeled windows and tune both thresholds for recall, calibration, camera placement, lighting, and the actual anomaly definitions.
-
