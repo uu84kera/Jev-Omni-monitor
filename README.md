@@ -107,7 +107,7 @@ Prepare the shared model cache on a login node; this downloads roughly 24 GB but
 load the model or require a GPU:
 
 ```bash
-export HF_HOME=/project2/ruishanl_1185/huangxin/cache/huggingface
+export HF_HOME=.../cache/huggingface
 python scripts/download_jev_model.py
 ```
 
