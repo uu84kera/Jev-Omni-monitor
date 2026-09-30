@@ -12,6 +12,12 @@ camera or image stream
   -> policy decision + JSONL event log
 ```
 
+## Pipeline
+
+<p align="center">
+  <img src="JevGuard_pipeline.png" alt="JevGuard hierarchical anomaly monitoring pipeline" width="760">
+</p>
+
 ## Why this shape
 
 Jev-Omni is a 12B self-hosted classifier with substantial CUDA memory requirements. The MVP therefore keeps model calls behind interfaces and starts with deterministic mock providers. This validates sampling, thresholds, escalation, structured output, and logging on a laptop before GPU or paid API work begins.
