@@ -23,7 +23,7 @@ suspicious   /     safe
 
    ↓                 ↓
    
-Strong VLM        discard
+Strong VLM        Ignore
 
    ↓
    
