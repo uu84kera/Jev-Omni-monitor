@@ -81,10 +81,9 @@ def incident_clip_bounds(
 
 
 def extract_clip(video_path: Path, output_path: Path, bounds: ClipBounds) -> None:
-    if shutil.which("ffmpeg") is None:
-        raise RuntimeError("ffmpeg is required to extract incident clips")
+    ffmpeg = ffmpeg_executable()
     command = [
-        "ffmpeg",
+        ffmpeg,
         "-hide_banner",
         "-loglevel",
         "error",
@@ -114,27 +113,48 @@ def extract_clip(video_path: Path, output_path: Path, bounds: ClipBounds) -> Non
     subprocess.run(command, check=True)
 
 
+def ffmpeg_executable() -> str:
+    system_ffmpeg = shutil.which("ffmpeg")
+    if system_ffmpeg:
+        return system_ffmpeg
+    try:
+        import imageio_ffmpeg
+    except ImportError as error:
+        raise RuntimeError(
+            "ffmpeg is required; install the qwen extra or provide ffmpeg on PATH"
+        ) from error
+    return imageio_ffmpeg.get_ffmpeg_exe()
+
+
 def video_has_audio(video_path: Path) -> bool:
-    if shutil.which("ffprobe") is None:
-        return False
+    ffprobe = shutil.which("ffprobe")
+    if ffprobe:
+        result = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "a",
+                "-show_entries",
+                "stream=index",
+                "-of",
+                "csv=p=0",
+                str(video_path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return bool(result.stdout.strip())
+
     result = subprocess.run(
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-select_streams",
-            "a",
-            "-show_entries",
-            "stream=index",
-            "-of",
-            "csv=p=0",
-            str(video_path),
-        ],
-        check=True,
+        [ffmpeg_executable(), "-hide_banner", "-i", str(video_path)],
+        check=False,
         capture_output=True,
         text=True,
     )
-    return bool(result.stdout.strip())
+    return "Audio:" in result.stderr
 
 
 def parse_json_response(text: str) -> dict[str, Any]:

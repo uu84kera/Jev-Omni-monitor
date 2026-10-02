@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 from jev_monitor import qwen_analyzer
 
@@ -98,3 +100,14 @@ def test_analyze_incident_file_writes_structured_output(tmp_path: Path, monkeypa
     assert output[0]["analysis"]["provider"] == "fake-qwen"
     assert output[0]["media"]["audio_used"] is True
     assert json.loads(output_path.read_text())["analysis"]["is_anomaly"] is False
+
+
+def test_ffmpeg_executable_falls_back_to_imageio(monkeypatch) -> None:
+    monkeypatch.setattr(qwen_analyzer.shutil, "which", lambda name: None)
+    monkeypatch.setitem(
+        sys.modules,
+        "imageio_ffmpeg",
+        SimpleNamespace(get_ffmpeg_exe=lambda: "/cache/ffmpeg-imageio"),
+    )
+
+    assert qwen_analyzer.ffmpeg_executable() == "/cache/ffmpeg-imageio"
