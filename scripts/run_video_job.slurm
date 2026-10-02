@@ -12,7 +12,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="${PROJECT_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+PROJECT_DIR="${PROJECT_DIR:-${SLURM_SUBMIT_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}}"
 VENV_PATH="${VENV_PATH:-$PROJECT_DIR/.venv}"
 if [[ -z "${VIDEO_PATH:-}" ]]; then
     : "${DATA_DIR:?Set DATA_DIR or VIDEO_PATH before submitting the job}"

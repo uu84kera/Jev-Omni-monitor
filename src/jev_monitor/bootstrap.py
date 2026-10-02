@@ -11,6 +11,7 @@ from .adapters import (
     PillowMotionGate,
 )
 from .config import Settings
+from .incidents import JsonlIncidentSink
 from .pipeline import MonitoringPipeline
 
 
@@ -32,6 +33,8 @@ def build_pipeline(settings: Settings) -> tuple[MonitoringPipeline, JsonlEventSi
         analyzer=analyzer,
         sink=sink,
         suspicious_threshold=settings.suspicious_threshold,
+        incident_sink=JsonlIncidentSink(settings.incident_log),
+        incident_max_gap_seconds=settings.incident_max_gap_seconds,
+        analysis_mode=settings.analysis_mode,
     )
     return pipeline, sink
-

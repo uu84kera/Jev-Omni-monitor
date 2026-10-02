@@ -28,9 +28,20 @@ jev = [
   "torchvision",
   "transformers==5.17.0",
 ]
+qwen = [
+  "accelerate",
+  "qwen-omni-utils[decord]",
+  "torch>=2.10",
+  "torchvision",
+  "transformers>=4.51.3",
+]
 
 [project.scripts]
 jev-monitor = "jev_monitor.cli:main"
+jev-monitor-evaluate = "jev_monitor.evaluation:main"
+jev-monitor-incidents = "jev_monitor.incidents:main"
+jev-monitor-summarize-incidents = "jev_monitor.incidents:summary_main"
+jev-monitor-qwen = "jev_monitor.qwen_analyzer:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

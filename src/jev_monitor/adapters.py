@@ -21,6 +21,25 @@ from .domain import (
     TemporalWindow,
 )
 
+
+JEV_STATE_TEMPLATE = (
+    "Three ordered frames from indoor pet-monitoring camera {camera_id}, "
+    "shown earliest to latest. Judge only visible evidence. Normal pet behavior "
+    "can include resting, walking, playing, looking at, approaching, or jumping "
+    "toward the camera when there is no visible harm. Suspicious evidence can be "
+    "a dangerous event or a static scene condition, including a fall, injury, "
+    "intrusion, smoke, fire, dangerous interaction, feces, vomit, blood, damaged "
+    "property, or another household hazard. Ordinary motion, low light, or "
+    "proximity to the camera alone is not suspicious."
+)
+
+JEV_QUESTION = (
+    "Does the visible sequence contain an event or scene condition that warrants "
+    "further anomaly analysis? Choose safe for ordinary pet and household activity "
+    "without visible harm. Choose suspicious when visible evidence suggests danger, "
+    "injury, distress, contamination, damage, intrusion, or another abnormal condition."
+)
+
 # calculate the difference between three frames and return a motion score
 class PillowMotionGate:
     def __init__(self, threshold: float, force_every: int = 10) -> None:
@@ -89,8 +108,8 @@ class HttpJevClassifier:
                 self.endpoint,
                 headers=headers,
                 data={
-                    "state": f"Three ordered frames from camera {window.camera_id}.",
-                    "question": "Does this sequence contain an event requiring further analysis?",
+                    "state": JEV_STATE_TEMPLATE.format(camera_id=window.camera_id),
+                    "question": JEV_QUESTION,
                     "options_json": json.dumps(["safe", "suspicious"]),
                 },
                 files={"media": (contact_sheet.name, media, "image/jpeg")},

@@ -22,6 +22,9 @@ class Settings:
     motion_threshold: float = 0.025
     force_classify_every: int = 10
     event_log: Path = Path("data/events/events.jsonl")
+    incident_log: Path = Path("data/events/incidents.jsonl")
+    incident_max_gap_seconds: float = 2.0
+    analysis_mode: str = "immediate"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -36,5 +39,7 @@ class Settings:
             motion_threshold=float(_env("MOTION_THRESHOLD", "0.025")),
             force_classify_every=int(_env("FORCE_CLASSIFY_EVERY", "10")),
             event_log=Path(_env("EVENT_LOG", "data/events/events.jsonl")),
+            incident_log=Path(_env("INCIDENT_LOG", "data/events/incidents.jsonl")),
+            incident_max_gap_seconds=float(_env("INCIDENT_MAX_GAP_SECONDS", "2.0")),
+            analysis_mode=_env("ANALYSIS_MODE", "immediate"),
         )
-

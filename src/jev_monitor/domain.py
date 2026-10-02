@@ -21,6 +21,7 @@ class Severity(StrEnum):
 class Action(StrEnum):
     IGNORED = "ignored"
     SAFE = "safe"
+    CANDIDATE_MERGED = "candidate_merged"
     LOG_ONLY = "log_only"
     QUEUE_REVIEW = "queue_review"
     NOTIFY = "notify"
@@ -72,6 +73,7 @@ class Event:
     captured_at: datetime
     motion: MotionResult
     action: Action
+    incident_id: str | None = None
     classification: ClassificationResult | None = None
     analysis: AnomalyAnalysis | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -92,3 +94,9 @@ class Event:
 
         return encode(asdict(self))
 
+
+@dataclass(frozen=True)
+class ScreeningResult:
+    window: TemporalWindow
+    motion: MotionResult
+    classification: ClassificationResult | None = None
