@@ -28,6 +28,8 @@ class VideoSummary:
     ignored_windows: int
     safe_windows: int
     suspicious_windows: int
+    incidents: int
+    strong_vlm_calls: int
     max_suspicious_probability: float | None
     decision: str
 
@@ -98,6 +100,23 @@ def process_video(
     suspicious_windows = 0
     suspicious_probabilities: list[float] = []
     window_frames: deque[Frame] = deque(maxlen=3)
+    stream_factory = getattr(pipeline, "incident_stream", None)
+    incident_stream = (
+        stream_factory(interval_seconds)
+        if callable(stream_factory)
+        else None
+    )
+
+    def collect(event: Event) -> None:
+        nonlocal ignored_windows, safe_windows, suspicious_windows
+        if event.classification is not None:
+            suspicious_probabilities.append(event.classification.suspicious)
+        if event.action == Action.IGNORED:
+            ignored_windows += 1
+        elif event.action == Action.SAFE:
+            safe_windows += 1
+        else:
+            suspicious_windows += 1
 
     with TemporaryDirectory(prefix="jev-monitor-video-") as directory:
         output_dir = Path(directory)
@@ -107,23 +126,22 @@ def process_video(
             if len(window_frames) < 3:
                 continue
 
-            event = pipeline.process(
-                TemporalWindow(
-                    camera_id=camera_id,
-                    frames=tuple(window_frames),  # type: ignore[arg-type]
-                )
+            window = TemporalWindow(
+                camera_id=camera_id,
+                frames=tuple(window_frames),  # type: ignore[arg-type]
             )
             total_windows += 1
+            events = (
+                incident_stream.process(window)
+                if incident_stream is not None
+                else [pipeline.process(window)]
+            )
+            for event in events:
+                collect(event)
 
-            if event.classification is not None:
-                suspicious_probabilities.append(event.classification.suspicious)
-
-            if event.action == Action.IGNORED:
-                ignored_windows += 1
-            elif event.action == Action.SAFE:
-                safe_windows += 1
-            else:
-                suspicious_windows += 1
+        if incident_stream is not None:
+            for event in incident_stream.flush():
+                collect(event)
 
     if sampled_count < 3:
         raise ValueError(
@@ -139,6 +157,10 @@ def process_video(
         ignored_windows=ignored_windows,
         safe_windows=safe_windows,
         suspicious_windows=suspicious_windows,
+        incidents=(incident_stream.incident_count if incident_stream is not None else 0),
+        strong_vlm_calls=(
+            incident_stream.strong_vlm_calls if incident_stream is not None else suspicious_windows
+        ),
         max_suspicious_probability=(
             round(max(suspicious_probabilities), 4)
             if suspicious_probabilities
